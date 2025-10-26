@@ -1,5 +1,5 @@
 APPVERSION = "0.3.6"
-USEFAKEHUB = True
+USEFAKEHUB = False
 # moderators
 madawaderIds = ["47910472"]
 # Debug logging was added by Github Copilot
@@ -549,6 +549,77 @@ def sSD():
 def gSD():
     if "key" in request.args:
         return session[request.args["key"]]
+
+@app.route("/madawader/updatedrop", methods=["GET"])
+def etphonehome():
+    required = [
+    "id",
+    "itemName",
+    "startSeconds",
+    "videoTitle",
+    "ytId",
+    "verificationStatus",
+    "rejectionNotice",
+    "videoDate",
+    "submitDate",
+    "itemPrice",
+    "dropReason",
+    "droppedOnto",
+    "resultingDamage",
+    "approxDropHeight",
+    "itemType",
+    "itemCondition",
+    "componentType",
+    "submitterID",
+    "note"
+]
+    data = request.args or request.form
+
+    if any(
+        k not in request.args
+        or str(request.args.get(k)).strip().lower() in ("", "none", "null")
+        for k in required
+    ):
+
+        if not github.authorized:
+            return redirect(url_for("github.login"))
+        if not session["isModerator"]:
+            return "kindly go fuck yourself."
+        db = get_db()
+        try:
+            modify = []
+            attributetuple = ();
+            for attr in required:
+                    
+                if attr != id:
+                    modify.append(f"{attr} = ?")
+                if request.args.get(attr).lower().strip() == "none":
+                    attributetuple = attributetuple + (None,)
+                else:
+                    attributetuple = attributetuple + (request.args.get(attr),)
+            attributetuple = attributetuple + (request.args.get("id"),)
+            cur = db.execute(
+                f"""
+            UPDATE drops
+            SET {", ".join(modify)}
+            WHERE id = ?;
+            """,
+                attributetuple,
+            )
+            db.commit()
+        except Exception as e:
+            return make_response(e)
+
+        return make_response("<script>setTimeout(()=>{window.navigation.back()}, 1500)</script>Modified successfully. Taking you back to <script>document.writeln(document.referrer)</script>")
+    else:
+        print(request.args)
+        return f"Missing: {[
+    k for k in required
+    if k not in request.args
+    or str(request.args.get(k)).strip().lower() in ("", "none", "null")
+]}"
+
+
     
 
 if __name__ == "__main__":

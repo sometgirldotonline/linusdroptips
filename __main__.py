@@ -1,4 +1,6 @@
 APPVERSION = "0.3.6"
+# moderators
+madawaderIds = ["47910472"]
 # Debug logging was added by Github Copilot
 # yes this is literally the Goblintasks source code :sob:
 from flask import (
@@ -46,6 +48,7 @@ if not os.path.exists(
 
 # fix reverse proxies
 from werkzeug.middleware.proxy_fix import ProxyFix
+import logging, traceback, secrets
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
@@ -57,13 +60,22 @@ def getYTVidMeta(id):
     ydl_opts = {
         'skip_download': True,
         'quiet': True,
+        'force_generic_extractor': True,  # sometimes faster
+        'extract_flat': True,             # don’t resolve formats/streams
     }
     with YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(id, download=False)
-        return {"title": info.get("title"), "handle": info.get("uploader_id"), "pStamp": info.get("epoch")}
+        return {"title": info.get("title"), "handle": info.get("uploader_id"), "pStamp": int(datetime.strptime(info.get("upload_date"), "%Y%m%d").timestamp())}
     return "failed"
-    
 
+def hmsToSeconds(hms):
+    h, m, s = map(int, hms.split(":"))
+    return (h * 3600) + (m * 60) + s
+
+def has_all_keys_set(obj, required_keys):
+    return set(required_keys).issubset(obj.keys())
+def all_keys_have_values(obj, required_keys):
+    return all(k in obj and obj[k] not in (None, '') for k in required_keys)
 
 @app.before_request
 def track_request():
@@ -75,19 +87,17 @@ def requests_per_second():
     recent = [t for t in rpsTimestamps if now - t <= 1]
     return len(recent)
 
-
+db = None
 
 def get_db():
-    if "db" not in g:
-        if "github_id" not in session:
-            return None
-        user_db_path = os.path.join(
+    global db
+    if db == None:
+        db = sqlite3.connect(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             f"appdata.sqlite",
-        )
-        g.db = sqlite3.connect(user_db_path)
-        g.db.row_factory = sqlite3.Row
-    return g.db
+        ))
+        db.row_factory = sqlite3.Row
+    return db
 
 
 @app.teardown_appcontext
@@ -132,9 +142,17 @@ def timestamp_to_datetime(value):
     # Use local time; switch to utcfromtimestamp if you want UTC
     return datetime.datetime.fromtimestamp(t)
 
+githubIdMap = {}
+
 @app.template_filter()
 def getGithub(id, what):
-    return github.get(f"/user/{id}").json()[what]
+    id = str(id)
+    if id in githubIdMap:
+        return githubIdMap[id][what]
+    else:
+        data =  github.get(f"/user/{id}").json()
+        githubIdMap[id] = data
+        return data[what]
 app.register_blueprint(ghblueprint, url_prefix="/login")
 
 def generateUpdates(state, updates=[]):
@@ -150,7 +168,7 @@ def generateUpdates(state, updates=[]):
 @app.route("/logout", methods=["GET"])
 def logout():
     session.clear()
-    res = make_response("Logged Out.")
+    res = make_response("<script>setTimeout(()=>{window.navigation.back()}, 1500)</script>Logged Out. Taking you back to <script>document.writeln(document.referrer)</script>")
     res.set_cookie("session", "", max_age=0)
     return res
 
@@ -161,16 +179,17 @@ def login():
     else:
         return redirect("/")
 
-@app.route("/", methods=["GET"])
-def index():
-    db = get_db()
-    cur = db.cursor()
+def prepareSession():
     if github.authorized and "github_id" not in session:
         resp = github.get("/user")
         assert resp.ok
         user_info = resp.json()
         session["github_id"] = user_info["id"]
         session["github_login"] = user_info["login"]
+    if "github_id" in session and str(session["github_id"]) in madawaderIds:
+        session["isModerator"] = True
+    else:
+        session["isModerator"] = False
     if "analNoticeSeen" not in session:
         session["analNoticeSeen"] = False
     if "enableAnal" not in session:
@@ -185,6 +204,12 @@ def index():
         theme = session["theme"]
     else:
         session["theme"] = "default"
+
+@app.route("/", methods=["GET"])
+def index():
+    db = get_db()
+    cur = db.cursor()
+    prepareSession()
     return render_template(
         "app.html",
         showAnayliticsNotice=not session["analNoticeSeen"],
@@ -194,6 +219,7 @@ def index():
         loggedIn=github.authorized,
         drops=cur.execute("""SELECT *
 FROM drops
+WHERE verificationStatus = 1
 ORDER BY id DESC
 LIMIT 10;
 """).fetchall()
@@ -206,26 +232,7 @@ def search():
     query = request.args["q"]
     db = get_db()
     cur = db.cursor()
-    if github.authorized and "github_id" not in session:
-        resp = github.get("/user")
-        assert resp.ok
-        user_info = resp.json()
-        session["github_id"] = user_info["id"]
-        session["github_login"] = user_info["login"]
-    if "analNoticeSeen" not in session:
-        session["analNoticeSeen"] = False
-    if "enableAnal" not in session:
-        session["enableAnal"] = False
-    dnt = request.headers.get("DNT") == "1"
-    gpc = request.headers.get("Sec-GPC") == "1"
-    if dnt or (gpc and "modifiedInSettings" not in session):
-        session["enableAnal"] = False
-        session["analNoticeSeen"] = True
-    theme = ""
-    if "theme" in session:
-        theme = session["theme"]
-    else:
-        session["theme"] = "default"
+    prepareSession()
     terms = query.split(" ")
     columns = "itemName,itemPrice,dropReason,droppedOnto,resultingDamage,approxDropHeight,itemType,itemCondition,componentType,submitterID,ytId,videoTitle,videoDate,startSeconds,submitDate".split(",")
     query_parts = []
@@ -244,7 +251,7 @@ def search():
         query=query,
         drops=cur.execute(f"""SELECT *
 FROM drops
-WHERE {' OR '.join(query_parts)}
+WHERE verificationStatus = 1 AND ({' OR '.join(query_parts)})
 """, params).fetchall()
     )
 
@@ -253,26 +260,13 @@ WHERE {' OR '.join(query_parts)}
 def drop(id):
     db = get_db()
     cur = db.cursor()
-    if github.authorized and "github_id" not in session:
-        resp = github.get("/user")
-        assert resp.ok
-        user_info = resp.json()
-        session["github_id"] = user_info["id"]
-        session["github_login"] = user_info["login"]
-    if "analNoticeSeen" not in session:
-        session["analNoticeSeen"] = False
-    if "enableAnal" not in session:
-        session["enableAnal"] = False
-    dnt = request.headers.get("DNT") == "1"
-    gpc = request.headers.get("Sec-GPC") == "1"
-    if dnt or (gpc and "modifiedInSettings" not in session):
-        session["enableAnal"] = False
-        session["analNoticeSeen"] = True
-    theme = ""
-    if "theme" in session:
-        theme = session["theme"]
-    else:
-        session["theme"] = "default"
+    prepareSession()
+    thisDrop = cur.execute("""SELECT *
+FROM drops
+WHERE id = ?
+""", (id,)).fetchone()
+    if thisDrop["verificationStatus"] != 1 and str(session["github_id"]) != str(thisDrop["submitterID"]):
+        return "404 Drop Not Found"
     return render_template(
         "dropViewer.html",
         showAnayliticsNotice=not session["analNoticeSeen"],
@@ -280,51 +274,99 @@ def drop(id):
         host=os.getenv("APPHOST"),
         session=session,
         loggedIn=github.authorized,
-        drop=cur.execute("""SELECT *
-FROM drops
-WHERE id = ?
-""", (id,)).fetchone(),
+        drop=thisDrop,
                 relatedDrops=cur.execute(""" SELECT *
     FROM drops
-    WHERE ytId = (
+    WHERE verificationStatus = 1 AND  ytId = (
         SELECT ytId
         FROM drops
         WHERE id = ?
     )""", (id,)).fetchall(),
                 drops=cur.execute("""SELECT *
 FROM drops
+WHERE verificationStatus = 1 AND id != ?
 ORDER BY id DESC
 LIMIT 10;
-""").fetchall()
+""", (id,)).fetchall(),
+                userIsAuthor=str(session["github_id"]) == str(thisDrop["submitterID"])
     )
 
+
+@app.route("/user/<int:id>", methods=["GET"])
+def user(id):
+    db = get_db()
+    cur = db.cursor()
+    prepareSession()
+    uD = None
+    userIsAuthor = False
+    if github.authorized and "github_id" in session and str(session["github_id"]) == str(id):
+        uD = cur.execute(""" SELECT *
+    FROM drops
+    WHERE submitterID = ?""", (session["github_id"],)).fetchall()
+        userIsAuthor = True
+    else:
+        uD = cur.execute(""" SELECT *
+    FROM drops
+    WHERE verificationStatus = 1 AND submitterID = ?""", (id,)).fetchall()
+    return render_template(
+        "user.html",
+        showAnayliticsNotice=not session["analNoticeSeen"],
+        enableAnal=session["enableAnal"],
+        host=os.getenv("APPHOST"),
+        session=session,
+        loggedIn=github.authorized,
+        userDrops=uD,
+        userID=id,
+        userIsAuthor=userIsAuthor
+    )
+
+@app.route("/madawader", methods=["GET"])
+def madawader():
+    db = get_db()
+    cur = db.cursor()
+    prepareSession()
+    if "github_id" not in session or not session.get("isModerator", False) or str(session["github_id"]) not in madawaderIds:
+        return "denied"
+    return render_template(
+        "moderator.html",
+        showAnayliticsNotice=not session["analNoticeSeen"],
+        enableAnal=session["enableAnal"],
+        host=os.getenv("APPHOST"),
+        session=session,
+        loggedIn=github.authorized,
+        drops=cur.execute(""" SELECT *
+    FROM drops""").fetchall(),
+        userID=id,
+    )
+
+@app.route("/madawader/drop/<int:id>", methods=["GET"])
+def madawaderdrop(id):
+    db = get_db()
+    cur = db.cursor()
+    prepareSession()
+    if "github_id" not in session or not session.get("isModerator", False) or str(session["github_id"]) not in madawaderIds:
+        return "denied"
+    thisDrop = cur.execute("""SELECT *
+FROM drops
+WHERE id = ?
+""", (id,)).fetchone()
+    if thisDrop["verificationStatus"] != 1 and str(session["github_id"]) != str(thisDrop["submitterID"]):
+        return "404 Drop Not Found"
+    return render_template(
+        "madawaderDropViewer.html",
+        showAnayliticsNotice=not session["analNoticeSeen"],
+        enableAnal=session["enableAnal"],
+        host=os.getenv("APPHOST"),
+        session=session,
+        loggedIn=github.authorized,
+        drop=thisDrop
+    )
 
 @app.route("/submit", methods=["GET"])
 def submit():
     db = get_db()
     cur = db.cursor()
-    if not github.authorized:
-        return redirect(url_for("github.login"))
-    if github.authorized and "github_id" not in session:
-        resp = github.get("/user")
-        assert resp.ok
-        user_info = resp.json()
-        session["github_id"] = user_info["id"]
-        session["github_login"] = user_info["login"]
-    if "analNoticeSeen" not in session:
-        session["analNoticeSeen"] = False
-    if "enableAnal" not in session:
-        session["enableAnal"] = False
-    dnt = request.headers.get("DNT") == "1"
-    gpc = request.headers.get("Sec-GPC") == "1"
-    if dnt or (gpc and "modifiedInSettings" not in session):
-        session["enableAnal"] = False
-        session["analNoticeSeen"] = True
-    theme = ""
-    if "theme" in session:
-        theme = session["theme"]
-    else:
-        session["theme"] = "default"
+    prepareSession()
     return render_template(
         "submit.html",
         showAnayliticsNotice=not session["analNoticeSeen"],
@@ -335,33 +377,92 @@ def submit():
     )
 
 @app.route("/submit/form", methods=["GET"])
-def submit():
+def submitForm():
     db = get_db()
     cur = db.cursor()
     if not github.authorized:
         return redirect(url_for("github.login"))
-    if github.authorized and "github_id" not in session:
-        resp = github.get("/user")
-        assert resp.ok
-        user_info = resp.json()
-        session["github_id"] = user_info["id"]
-        session["github_login"] = user_info["login"]
-    if "analNoticeSeen" not in session:
-        session["analNoticeSeen"] = False
-    if "enableAnal" not in session:
-        session["enableAnal"] = False
-    dnt = request.headers.get("DNT") == "1"
-    gpc = request.headers.get("Sec-GPC") == "1"
-    if dnt or (gpc and "modifiedInSettings" not in session):
-        session["enableAnal"] = False
-        session["analNoticeSeen"] = True
-    theme = ""
-    if "theme" in session:
-        theme = session["theme"]
-    else:
-        session["theme"] = "default"
-    
-    return render_template(
+    prepareSession()
+    if not(has_all_keys_set(request.args, [
+    "vidid",
+    "droptitle",
+    "cost",
+    "reason",
+    "droppedOnto",
+    "damage",
+    "approxDropHeight",
+    "itemType",
+    "itemCondition",
+    "componentType",
+    "videoTimestamp",
+])):
+        return "bitch youre missing a key try again"
+    if not(all_keys_have_values(request.args,[
+    "vidid",
+    "droptitle",
+    "cost",
+    "reason",
+    "droppedOnto",
+    "damage",
+    "approxDropHeight",
+    "itemType",
+    "itemCondition",
+    "componentType",
+    "videoTimestamp",
+])):
+        return "why are you trying to submit manually (or your browser is drunk). go back and try again, you forgot something (its empty)"
+    videoInfo = getYTVidMeta(request.args["vidid"])
+    if videoInfo["handle"].lower() not in ["@linustechtips",
+"@shortcircuit",
+"@techquickie",
+"@techlinked",
+"@gamelinked",
+"@macaddress",
+"@lmgclips",
+"@channelsuperfun",
+"@theyrejustmovies"]:
+        return "Sorry, that video is not from an official LTT channel, please contact me on Telegram (@sometgirldotonline)"
+    try:
+        r = db.execute(f"""INSERT INTO drops (
+                      startSeconds,
+                      videoDate,
+                      videoTitle,
+                      ytId,
+                      submitterID,
+                      verificationStatus,
+                      componentType,
+                      itemCondition,
+                      itemType,
+                      approxDropHeight,
+                      resultingDamage,
+                      droppedOnto,
+                      dropReason,
+                      itemPrice,
+                      itemName,
+                      note
+                  )
+                  VALUES (
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      0,
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      ?,
+                      ?
+                  );
+""", (hmsToSeconds(request.args["videoTimestamp"]), videoInfo["pStamp"], videoInfo["title"], request.args["vidid"], session["github_id"], request.args["componentType"], request.args["itemCondition"], request.args["itemType"], request.args["approxDropHeight"], request.args["damage"], request.args["droppedOnto"], request.args["reason"], request.args["cost"], request.args["droptitle"], request.args["notes"]  ))
+        db.commit()
+        
+        return render_template(
         "submitted.html",
         showAnayliticsNotice=not session["analNoticeSeen"],
         enableAnal=session["enableAnal"],
@@ -369,6 +470,21 @@ def submit():
         session=session,
         loggedIn=github.authorized,
     )
+    except Exception as e:
+        err_id = secrets.token_hex(8)
+        logging.exception("submitForm error (id=%s): %s", err_id, traceback.format_exc())
+
+        # try to rollback DB work if possible
+        try:
+            if "db" in locals() and db is not None:
+                db.rollback()
+        except Exception:
+            logging.exception("Rollback failed for error id %s", err_id)
+
+        # return a generic, non-sensitive error to the client with a reference id
+        res = make_response(f"Internal server error. Reference: {err_id}", 500)
+        return res
+    
 
 
 

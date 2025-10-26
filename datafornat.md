@@ -17,3 +17,5 @@ itemCondition:
 2: Refurbished
 3: Second Hand Purchase
 4: Unknown
+
+vidid, droptitle, cost, reason, droppedOnto, damage, approxDropHeight, itemType, itemCondition, componentType, videoTimestamp, notes

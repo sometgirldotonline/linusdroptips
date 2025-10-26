@@ -1,4 +1,4 @@
-{% macro vidgrid(drops, layout, type) -%}
+{% macro vidgrid(drops, layout, type, userIsAuthor, isModeration) -%}
 {% set shadows = 'shadow-lg' %}
 
 {%- if type == "subgrid" -%}
@@ -15,68 +15,125 @@ fuck you bitch wheres my layout argument
 <div class="grid grid-cols-1 gap-8 vidgrid w-full m-0" style="width: 100%; max-width:30vw">
     {% for drop in drops %}
     <div class="bg-white rounded-lg {{shadows}}">
-        <iframe src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;enablejsapi=1"
+        <iframe
+            src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;rel=0&amp;modestbranding=1"
             title="YouTube video player" frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="" class="w-ful object-cover rounded-lg "
             style="
     width: 100%;
 "></iframe>
+        {% if isModeration %}
+        <div class="p-4" onclick="window.location.href='/madawader/drop/{{drop.id}}'">
+        {% else %}
         <div class="p-4" onclick="window.location.href='/drop/{{drop.id}}'">
-            <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
-            <p class="text-gray-600 font-bold">Video: {{ drop.videoTitle }} @ {{
-                hms(drop.startSeconds) }}</p>
-            <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
-                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
-            <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
-                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
-            {% if drop.itemPrice is not none %}
-            <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
-            {% else %}
-            <p class="text-gray-600"> Item Cost: Not Listed</p>
-            {% endif %}
-            <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{ drop.submitterID |
-                    getGithub("login") }}</a></p>
+        {% endif %}
+                <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
+                <p class="text-gray-600 font-bold">Video: {{ drop.videoTitle }} @ {{
+                    hms(drop.startSeconds) }}</p>
+                <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
+                    datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
+                    datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                {% if drop.itemPrice is not none %}
+                <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
+                {% else %}
+                <p class="text-gray-600"> Item Cost: Not Listed</p>
+                {% endif %}
+                {% if userIsAuthor %}
+                <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                    "Rejected"}.get(drop.verificationStatus,
+                    "Other") }} </p>
+                {% if drop.verificationStatus == 2 %}
+                <p>
+                    <b>Your drop was rejected. Here's what a moderator had to say:</b><br>
+                    <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                </p>
+                {% endif %}
+                {% endif %}
+                {% if isModeration %}
+                <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                    "Rejected"}.get(drop.verificationStatus,
+                    "Other") }} </p>
+                <p>
+                    <b>Rejection note:</b><br>
+                    <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                </p>
+                {% endif %}
+                <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{ drop.submitterID |
+                        getGithub("login") }}</a></p>
+            </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
-{%- else -%}
-{%- if layout == "horizontal" -%}
-{% from 'macros/hms.html' import hms %}
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 vidgrid w-full">
+    {%- else -%}
+    {%- if layout == "horizontal" -%}
+    {% from 'macros/hms.html' import hms %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 vidgrid w-full">
 
-{% for drop in drops %}
-<div class="bg-white rounded-lg {{shadows}}">
-    <iframe src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;enablejsapi=1"
-        title="YouTube video player" frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="" class="w-ful object-cover rounded-lg "
-        style="
+        {% for drop in drops %}
+        <div class="bg-white rounded-lg {{shadows}}">
+            <iframe
+                src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;rel=0&amp;modestbranding=1"
+                title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""
+                class="w-ful object-cover rounded-lg " style="
     width: 100%;
 "></iframe>
-
-    <div class="p-4" onclick="window.location.href='/drop/{{drop.id}}'">
-        <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
-        <p class="text-gray-600 font-bold">Video: {{ drop.videoTitle }} @ {{
-            hms(drop.startSeconds) }}</p>
-        <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
-            datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
-        <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
-            datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
-        {% if drop.itemPrice is not none %}
-        <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
-        {% else %}
-        <p class="text-gray-600"> Item Cost: Not Listed</p>
-        {% endif %}
-        <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{ drop.submitterID |
-                getGithub("login") }}</a></p>
+            {% if isModeration %}
+            <div class="p-4" onclick="window.location.href='/madawader/drop/{{drop.id}}'">
+            {% else %}
+            <div class="p-4" onclick="window.location.href='/drop/{{drop.id}}'">
+            {% endif %}
+                <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
+                <p class="text-gray-600 font-bold">Video: {{ drop.videoTitle }} @ {{
+                    hms(drop.startSeconds) }}</p>
+                <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
+                    datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
+                    datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                {% if drop.itemPrice is not none %}
+                <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
+                {% else %}
+                <p class="text-gray-600"> Item Cost: Not Listed</p>
+                {% endif %}
+                {% if userIsAuthor %}
+                <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                    "Rejected"}.get(drop.verificationStatus,
+                    "Other") }} </p>
+                {% if drop.verificationStatus == 2 %}
+                <p>
+                    <b>Your drop was rejected. Here's what a moderator had to say:</b><br>
+                    <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                </p>
+                {% endif %}
+                {% endif %}
+                {% if isModeration %}
+                <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                    "Rejected"}.get(drop.verificationStatus,
+                    "Other") }} </p>
+                <p>
+                    <b>Rejection note:</b><br>
+                    <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                </p>
+                {% endif %}
+                <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{ drop.submitterID |
+                        getGithub("login") }}</a></p>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-</div>
-{% endfor %}
-</div>
-{%- endif -%}
-{%- endif -%}
-{%- endif -%}
-{%- endif -%}
-{%- endmacro %}
+    {%- endif -%}
+    {%- endif -%}
+    {%- endif -%}
+    {%- endif -%}
+    {%- endmacro %}

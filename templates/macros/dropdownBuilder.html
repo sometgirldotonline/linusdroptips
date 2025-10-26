@@ -1,0 +1,6 @@
+{% macro dropdown( options, selected=None, selectedIsDisabled=False) -%}
+{%- for key, value in options.items() %}
+<option value="{{ key }}" {% if key==selected %}selected {% if selectedIsDisabled%}disabled{% endif %}{% endif %}>{{
+    value }}</option>
+{%- endfor %}
+{%- endmacro %}

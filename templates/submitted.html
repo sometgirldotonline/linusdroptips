@@ -6,20 +6,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linus Drop Tips - Searching for {{ query }}</title>
+    <title>Linus Drop Tips - Item Submitted</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        /* Small local tweaks for the form */
+        .formvalue {
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 font-sans leading-relaxed">
     {% include 'navbar.html' %}
+
     <!-- Main Content -->
     <main class="py-6 w-full">
         <div class="container px-6 w-full">
-            <h3 class="font-bold text-2xl mb-1"> Search results for {{ query }}</h3>
-            <!-- Item Grid -->
-            {{ vidgrid(drops, "horizontal", "rootgrid") }}
-
+            <div class="mx-auto max-w-3xl">
+                <h3 class="font-bold text-2xl mb-4 text-center">Submitted</h3>
+                <div class="w-full bg-white p-6 rounded-lg shadow-md">
+                    Your submission will now be reviewed by the application developer.
+                </div>
+            </div>
         </div>
     </main>
 

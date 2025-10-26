@@ -1,0 +1,151 @@
+{% from 'macros/hms.html' import hms %}
+{% from 'macros/vidgrid.html' import vidgrid %}
+{% from 'macros/dropdownBuilder.html' import dropdown %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linus Drop Tips - {{ drop.itemName }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body class="bg-gray-100 font-sans leading-relaxed">
+    {% include 'navbar.html' %}
+    <!-- Main Content -->
+    <main class="py-6 w-full">
+        <div class="container px-6 w-full">
+            <h3 class="font-bold text-3xl mb-1"> {{ drop.itemName }}</h3>
+            <!-- Item Grid -->
+            <div class="vidgrid w-full">
+                <div class="bg-white rounded-lg shadow-lg dv">
+                    <iframe
+                        src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;rel=0&amp;modestbranding=1"
+                        title="YouTube video player" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""
+                        class="w-ful object-cover rounded-lg " style="
+    width: 100%; max-width: 100vw
+"></iframe>
+
+                    <div class="p-4">
+                        <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
+                        <p class="text-gray-600 font-bold">Video: {{
+                            drop.videoTitle }} @ {{
+                            hms(drop.startSeconds) }}</p>
+                        {% if userIsAuthor and drop.verificationStatus != 1 %}
+                        <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                            "Rejected"}.get(drop.verificationStatus,
+                            "Other") }} </p>
+                        {% if drop.verificationStatus == 2 %}
+                        <p>
+                            <b>Your drop was rejected. Here's what a moderator had to say:</b><br>
+                            <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                        </p>
+                        {% endif %}
+                        {% endif %}
+                        <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
+                            datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                        <input value="{{drop.videoDate }}" type="number" name="videoDate"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
+                            datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                        <input value="{{drop.submitDate }}" type="number" name="submitDate"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
+                        <input value="{{drop.itemPrice }}" type="text" name="itemPrice"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <p class="text-gray-600">Drop Reason: {{ drop.dropReason }} </p>
+                        <input value="{{drop.dropReason }}" type="text" name="dropReason" list="dropReasonList"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <p class="text-gray-600">Dropped Onto: {{ drop.droppedOnto }} </p>
+                        <input value="{{drop.droppedOnto }}" type="text" name="droppedOnto" list="droppedOntoList"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <p class="text-gray-600">Resulting Damage: {{ drop.resultingDamage }} </p>
+                        <input value="{{drop.resultingDamage }}" type="text" name="resultingDamage"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <p class="text-gray-600">Approximate Drop Height: {{ drop.approxDropHeight }} </p>
+                        <input value="{{drop.approxDropHeight }}" type="text" name="approxDropHeight"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <p class="text-gray-600">Item Type: {{ {0: "Not a prop", 1: "Prop", 2:
+                            "Sponsored"}.get(drop.itemType, "Other") }} </p>
+                        <select name="itemType" id="itemType" required
+                            class="block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                            {{ dropdown({"a":"Make selection", 0: "Not a prop", 1: "Prop", 2:"Sponsored"},drop.itemType,
+                            False) }}
+                        </select>
+                        <p class="text-gray-600">Item Condition (before drop): {{ drop.itemCondition }} </p>
+                        <input required="" value="{{ drop.itemCondition }}" list="itemConditionList"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                            id="itemCondition" name="itemCondition" type="text" placeholder="Wooden Floor">
+                        <p class="text-gray-600">Component Type: {{ drop.componentType }} </p>
+                        <input required="" value="{{ drop.componentType }}" list="compTypeList"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                            id="itemCondition" name="componentType" type="text" placeholder="Wooden Floor">
+                        <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{
+                                drop.submitterID | getGithub("login") }}</a></p>
+                        <input required="" value="{{ drop.submitterID }}"
+                            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                            id="itemCondition" name="submitterID" type="text" placeholder="Wooden Floor">
+                        <p>
+                            <b>Description</b><br>
+                            <textareaa
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="notes" placeholder=":3" name="notes">{{ drop.note }}</textarea>
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <datalist id="itemConditionList">
+        <option value="Brand New">
+        <option value="Used">
+        <option value="Refurbished">
+        <option value="Second Hand Purchase">
+        <option value="Unknown">
+    </datalist>
+    <datalist id="dropReasonList">
+        <option value="Fumbled">
+        <option value="Fell from surface">
+        <option value="Swept from surface">
+        <option value="Unknown">
+    </datalist>
+    <datalist id="droppedOntoList">
+        <option value="Carpeted Floor">
+        <option value="Concrete">
+        <option value="Wooden Floor">
+        <option value="Unknown">
+    </datalist>
+    <datalist id="compTypeList">
+        <option value="CPU"></option>
+        <option value="GPU"></option>
+        <option value="RAM"></option>
+        <option value="Storage"></option>
+        <option value="Case"></option>
+        <option value="PSU"></option>
+        <option value="Other Addin"></option>
+        <option value="Keyboard"></option>
+        <option value="Mouse"></option>
+        <option value="Headphone/Earphone"></option>
+        <option value="Speaker"></option>
+        <option value="Display"></option>
+        <option value="Cooling"></option>
+        <option value="Projector"></option>
+        <option value="Cable"></option>
+    </datalist>
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center">
+            <p>&copy; Lily of sometgirl.online. Made using tailwind and python.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

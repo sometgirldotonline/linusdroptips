@@ -12,41 +12,7 @@
 </head>
 
 <body class="bg-gray-100 font-sans leading-relaxed">
-    <div class="sticky top-0 z-50 shadow-md">
-        <!-- Header Section -->
-        <header class="bg-gray-900 text-white py-6">
-            <div class="container mx-auto px-6 flex items-center justify-between">
-                <!-- Logo & Title -->
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-2xl font-bold">Linus Drop Tips</h1>
-                </div>
-
-                <!-- Search Bar -->
-                <div class="relative w-1/2">
-                    <form action="/search" method="get">
-                        <input type="search" id="q" name="q" placeholder="Search dropped items..."
-                            class="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                    </form>
-                </div>
-            </div>
-        </header>
-
-        <!-- Navigation Bar -->
-        <nav class="bg-gray-800 text-white py-3 w-full">
-            <div class="container mx-auto px-6 w-full">
-                <ul class="inline-flex space-x-6 navmenu">
-                    <li><a href="/" class="hover:text-blue-500">Home</a></li>
-                    <!-- <li><a href="/dropboard" class="hover:text-blue-500">The Dropboard</a></li> -->
-                    <li><a href="/submit" class="hover:text-blue-500">Submit an Item</a></li>
-                </ul>
-                {% if loggedIn %}
-                <a href="/account" class="hover:text-blue-500 accmenu">Logged in as {{ session.github_login }}</a>
-                {% else %}
-                <a href="/login" class="hover:text-blue-500 accmenu">Welcome Guest! Log In.</a>
-                {% endif %}
-            </div>
-        </nav>
-    </div>
+    {% include 'navbar.html' %}
     <!-- Main Content -->
     <main class="py-6 w-full">
         <div class="container px-6 w-full">
@@ -55,7 +21,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-8 vidgrid w-full">
                 <div class="col-span-2 bg-white rounded-lg shadow-lg dv">
                     <iframe
-                        src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;enablejsapi=1"
+                        src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;rel=0&amp;modestbranding=1"
                         title="YouTube video player" frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""
@@ -68,6 +34,19 @@
                         <p class="text-gray-600 font-bold">Video: {{
                             drop.videoTitle }} @ {{
                             hms(drop.startSeconds) }}</p>
+                        {% if userIsAuthor and drop.verificationStatus != 1 %}
+                        <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                            "Rejected"}.get(drop.verificationStatus,
+                            "Other") }} </p>
+                        {% if drop.verificationStatus == 2 %}
+                        <p>
+                            <b>Your drop was rejected. Here's what a moderator had to say:</b><br>
+                            <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                        </p>
+                        {% endif %}
+                        {% endif %}
                         <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
                             datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
                         <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
@@ -87,6 +66,12 @@
                         <p class="text-gray-600">Component Type: {{ drop.componentType }} </p>
                         <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{
                                 drop.submitterID | getGithub("login") }}</a></p>
+                        {% if drop.note != None %}
+                        <p>
+                            <b>Description</b><br>
+                            <code>{{ drop.note }}</code>
+                        </p>
+                        {% endif %}
                         <h2 class="text-lg font-semibold mb-0">All Drops in this Video</h2>
 
                         {{ vidgrid(relatedDrops, "horizontal", "subgrid") }}

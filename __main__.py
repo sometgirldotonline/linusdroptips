@@ -1,4 +1,5 @@
 APPVERSION = "0.3.6"
+USEFAKEHUB = True
 # moderators
 madawaderIds = ["47910472"]
 # Debug logging was added by Github Copilot
@@ -144,13 +145,23 @@ def timestamp_to_datetime(value):
 
 githubIdMap = {}
 
+# fake Github with fixed responses for everything because I need a way to work offline
+class fakeHub:
+    @staticmethod
+    def get(path):
+        return {"login":"offlinedevelopmentuser", "id":69}
+
+
 @app.template_filter()
 def getGithub(id, what):
     id = str(id)
     if id in githubIdMap:
         return githubIdMap[id][what]
     else:
-        data =  github.get(f"/user/{id}").json()
+        if USEFAKEHUB:
+            data = fakeHub.get("")
+        else:
+            data =  github.get(f"/user/{id}").json()
         githubIdMap[id] = data
         return data[what]
 app.register_blueprint(ghblueprint, url_prefix="/login")
@@ -181,9 +192,12 @@ def login():
 
 def prepareSession():
     if github.authorized and "github_id" not in session:
-        resp = github.get("/user")
-        assert resp.ok
-        user_info = resp.json()
+        if USEFAKEHUB:
+            user_info = fakeHub.get("")
+        else:
+            resp = github.get("/user")
+            assert resp.ok
+            user_info = resp.json()
         session["github_id"] = user_info["id"]
         session["github_login"] = user_info["login"]
     if "github_id" in session and str(session["github_id"]) in madawaderIds:

@@ -1,0 +1,2 @@
+- replace fakeHub with a wrapper that autoswitches if it is enabled
+- store Tailwind locally you dunce

@@ -1,0 +1,243 @@
+{% from 'macros/hms.html' import hms %}
+{% from 'macros/vidgrid.html' import vidgrid %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linus Drop Tips - Submit an item</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        /* Small local tweaks for the form */
+        .formvalue {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans leading-relaxed">
+    <div class="sticky top-0 z-50 shadow-md">
+        <!-- Header Section -->
+        <header class="bg-gray-900 text-white py-6">
+            <div class="container mx-auto px-6 flex items-center justify-between">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">Linus Drop Tips</h1>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="relative w-1/2">
+                    <form action="/search" method="get">
+                        <input type="search" id="q" name="q" placeholder="Search dropped items..."
+                            class="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </form>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Bar -->
+        <nav class="bg-gray-800 text-white py-3 w-full">
+            <div class="container mx-auto px-6 w-full flex items-center">
+                <ul class="inline-flex space-x-6 navmenu flex-1">
+                    <li><a href="/" class="hover:text-blue-500">Home</a></li>
+                    <!-- <li><a href="/dropboard" class="hover:text-blue-500">The Dropboard</a></li> -->
+                    <li><a href="/submit" class="hover:text-blue-500">Submit an Item</a></li>
+                </ul>
+                <div>
+                    {% if loggedIn %}
+                    <a href="/account" class="hover:text-blue-500 accmenu">Logged in as {{ session.github_login }}</a>
+                    {% else %}
+                    <a href="/login" class="hover:text-blue-500 accmenu">Welcome Guest! Log In.</a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <main class="py-6 w-full">
+        <div class="container px-6 w-full">
+            <div class="mx-auto max-w-3xl">
+                <h3 class="font-bold text-2xl mb-4 text-center">Submit a Drop</h3>
+                <form class="w-full bg-white p-6 rounded-lg shadow-md" action="/submit/form" method="get">
+                    <p>Note: for any of the textboxes with dropdowns, it doesn't have to be in the list, you can type
+                        whatever you want :3<br>also pls dont be an idiot, we know you, "{{session.github_login}}" submitted the form. if you do make false submissions too many time we will ban you, sorry.</p><br>
+                    <div class="flex flex-wrap -mx-3">
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="vidid">
+                                YouTube Video ID
+                            </label>
+                            <input
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="vidid" name="vidid" type="text" placeholder="dQw4w9WgXcQ" required>
+                        </div>
+
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="droptitle">
+                                Drop Title (not video title)
+                            </label>
+                            <input
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="droptitle" type="text" placeholder="idk man" name="droptitle" required>
+                        </div>
+
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="cost">
+                                Item Cost (e.g. $70CAD)
+                            </label>
+                            <input required
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="cost" name="cost" type="text" placeholder="$70CAD">
+                        </div>
+
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="reason">
+                                Drop Reason
+                            </label>
+                            <input required list="dropReasonList"
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="reason" type="text" placeholder="Knocked from table" name="reason">
+                        </div>
+
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="droppedOnto">
+                                Dropped onto
+                            </label>
+                            <input required list="droppedOntoList"
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="droppedOnto" name="droppedOnto" type="text" placeholder="Wooden Floor">
+                        </div>
+
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="damage">
+                                Damage caused to item
+                            </label>
+                            <input required
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="damage" type="text" placeholder="Scratched, Cracked, etc" name="damage">
+                        </div>
+
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="approxDropHeight">
+                                Approximate drop height
+                            </label>
+                            <input required
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="approxDropHeight" type="text" placeholder="0.69 Linuses" name="approxDropHeight">
+                            <small>Enter height in fractions of Linus' height</small>
+                        </div>
+
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="itemType">
+                                Item Type
+                            </label>
+                            <select name="itemType" id="itemType" required
+                                class="block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                                <option disabled selected>Make a selection</option>
+                                <option value="0">Not a Prop (not sponsored)</option>
+                                <option value="1">Prop</option>
+                                <option value="2">Provided by Sponsor</option>
+                            </select>
+                        </div>
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="itemCondition">
+                                Item Condition
+                            </label>
+                            <input required list="itemConditionList"
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="itemCondition" name="itemCondition" type="text" placeholder="Wooden Floor">
+                        </div>
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="componentType">
+                                Component Type
+                            </label>
+                            <input required list="compTypeList"
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="componentType" type="text" placeholder="your mother" name="componentType">
+                        </div>
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="approxDropHeight">
+                                Video Timestamp of drop (hh:mm:ss)
+                            </label>
+                            <input required
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="approxDropHeight" type="text" placeholder="04:20:69" name="approxDropHeight">
+                        </div>
+                        <div class="w-full md:w-1/2 px-3 formvalue">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                for="approxDropHeight">
+                                Notes
+                            </label>
+                            <textarea
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                id="notes" placeholder=":3" name="notes"></textarea>
+                        </div>
+                        <div class="w-full px-3 mt-4 text-center">
+                            <button type="submit"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Submit Drop
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    <datalist id="itemConditionList">
+        <option value="Brand New">
+        <option value="Used">
+        <option value="Refurbished">
+        <option value="Second Hand Purchase">
+        <option value="Unknown">
+    </datalist>
+    <datalist id="dropReasonList">
+        <option value="Fumbled">
+        <option value="Fell from surface">
+        <option value="Swept from surface">
+        <option value="Unknown">
+    </datalist>
+    <datalist id="droppedOntoList">
+        <option value="Carpeted Floor">
+        <option value="Concrete">
+        <option value="Wooden Floor">
+        <option value="Unknown">
+    </datalist>
+    <datalist id="compTypeList">
+        <option value="CPU"></option>
+        <option value="GPU"></option>
+        <option value="RAM"></option>
+        <option value="Storage"></option>
+        <option value="Case"></option>
+        <option value="PSU"></option>
+        <option value="Other Addin"></option>
+        <option value="Keyboard"></option>
+        <option value="Mouse"></option>
+        <option value="Headphone/Earphone"></option>
+        <option value="Speaker"></option>
+        <option value="Display"></option>
+        <option value="Cooling"></option>
+        <option value="Projector"></option>
+        <option value="Cable"></option>
+    </datalist>
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center">
+            <p>&copy; Lily of sometgirl.online. Made using tailwind and python.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

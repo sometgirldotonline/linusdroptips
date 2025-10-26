@@ -14,6 +14,7 @@ from flask import (
     session,
     send_file
 )
+from yt_dlp import YoutubeDL
 import shutil
 import jinja2
 import os
@@ -51,6 +52,17 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config.from_mapping({"DEBUG": True})
 # thing for reqs per sec calc
 rpsTimestamps = deque(maxlen=1000)
+
+def getYTVidMeta(id):
+    ydl_opts = {
+        'skip_download': True,
+        'quiet': True,
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(id, download=False)
+        return {"title": info.get("title"), "handle": info.get("uploader_id"), "pStamp": info.get("epoch")}
+    return "failed"
+    
 
 
 @app.before_request
@@ -187,6 +199,56 @@ LIMIT 10;
 """).fetchall()
     )
 
+@app.route("/search", methods=["GET"])
+def search():
+    if "q" not in request.args:
+        return redirect("/")
+    query = request.args["q"]
+    db = get_db()
+    cur = db.cursor()
+    if github.authorized and "github_id" not in session:
+        resp = github.get("/user")
+        assert resp.ok
+        user_info = resp.json()
+        session["github_id"] = user_info["id"]
+        session["github_login"] = user_info["login"]
+    if "analNoticeSeen" not in session:
+        session["analNoticeSeen"] = False
+    if "enableAnal" not in session:
+        session["enableAnal"] = False
+    dnt = request.headers.get("DNT") == "1"
+    gpc = request.headers.get("Sec-GPC") == "1"
+    if dnt or (gpc and "modifiedInSettings" not in session):
+        session["enableAnal"] = False
+        session["analNoticeSeen"] = True
+    theme = ""
+    if "theme" in session:
+        theme = session["theme"]
+    else:
+        session["theme"] = "default"
+    terms = query.split(" ")
+    columns = "itemName,itemPrice,dropReason,droppedOnto,resultingDamage,approxDropHeight,itemType,itemCondition,componentType,submitterID,ytId,videoTitle,videoDate,startSeconds,submitDate".split(",")
+    query_parts = []
+    params = []
+    for term in terms:
+        for col in columns:
+            query_parts.append(f"{col} LIKE ?")
+            params.append(f"%{term}%" )
+    return render_template(
+        "search.html",
+        showAnayliticsNotice=not session["analNoticeSeen"],
+        enableAnal=session["enableAnal"],
+        host=os.getenv("APPHOST"),
+        session=session,
+        loggedIn=github.authorized,
+        query=query,
+        drops=cur.execute(f"""SELECT *
+FROM drops
+WHERE {' OR '.join(query_parts)}
+""", params).fetchall()
+    )
+
+
 @app.route("/drop/<int:id>", methods=["GET"])
 def drop(id):
     db = get_db()
@@ -222,12 +284,92 @@ def drop(id):
 FROM drops
 WHERE id = ?
 """, (id,)).fetchone(),
+                relatedDrops=cur.execute(""" SELECT *
+    FROM drops
+    WHERE ytId = (
+        SELECT ytId
+        FROM drops
+        WHERE id = ?
+    )""", (id,)).fetchall(),
                 drops=cur.execute("""SELECT *
 FROM drops
 ORDER BY id DESC
 LIMIT 10;
 """).fetchall()
     )
+
+
+@app.route("/submit", methods=["GET"])
+def submit():
+    db = get_db()
+    cur = db.cursor()
+    if not github.authorized:
+        return redirect(url_for("github.login"))
+    if github.authorized and "github_id" not in session:
+        resp = github.get("/user")
+        assert resp.ok
+        user_info = resp.json()
+        session["github_id"] = user_info["id"]
+        session["github_login"] = user_info["login"]
+    if "analNoticeSeen" not in session:
+        session["analNoticeSeen"] = False
+    if "enableAnal" not in session:
+        session["enableAnal"] = False
+    dnt = request.headers.get("DNT") == "1"
+    gpc = request.headers.get("Sec-GPC") == "1"
+    if dnt or (gpc and "modifiedInSettings" not in session):
+        session["enableAnal"] = False
+        session["analNoticeSeen"] = True
+    theme = ""
+    if "theme" in session:
+        theme = session["theme"]
+    else:
+        session["theme"] = "default"
+    return render_template(
+        "submit.html",
+        showAnayliticsNotice=not session["analNoticeSeen"],
+        enableAnal=session["enableAnal"],
+        host=os.getenv("APPHOST"),
+        session=session,
+        loggedIn=github.authorized,
+    )
+
+@app.route("/submit/form", methods=["GET"])
+def submit():
+    db = get_db()
+    cur = db.cursor()
+    if not github.authorized:
+        return redirect(url_for("github.login"))
+    if github.authorized and "github_id" not in session:
+        resp = github.get("/user")
+        assert resp.ok
+        user_info = resp.json()
+        session["github_id"] = user_info["id"]
+        session["github_login"] = user_info["login"]
+    if "analNoticeSeen" not in session:
+        session["analNoticeSeen"] = False
+    if "enableAnal" not in session:
+        session["enableAnal"] = False
+    dnt = request.headers.get("DNT") == "1"
+    gpc = request.headers.get("Sec-GPC") == "1"
+    if dnt or (gpc and "modifiedInSettings" not in session):
+        session["enableAnal"] = False
+        session["analNoticeSeen"] = True
+    theme = ""
+    if "theme" in session:
+        theme = session["theme"]
+    else:
+        session["theme"] = "default"
+    
+    return render_template(
+        "submitted.html",
+        showAnayliticsNotice=not session["analNoticeSeen"],
+        enableAnal=session["enableAnal"],
+        host=os.getenv("APPHOST"),
+        session=session,
+        loggedIn=github.authorized,
+    )
+
 
 
 @app.route("/api/configureAnaylitics", methods=["POST"])

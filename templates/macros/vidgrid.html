@@ -1,15 +1,20 @@
-{% macro vidgrid(drops, type) -%}
+{% macro vidgrid(drops, layout, type) -%}
+{% set shadows = 'shadow-lg' %}
+
+{%- if type == "subgrid" -%}
+{% set shadows = 'shadow-md' %}
+{%- endif -%}
 {%- if drops is none -%}
 fuck you bitch wheres my drops argument
 {%- else -%}
-{%- if type is none -%}
-fuck you bitch wheres my type argument
+{%- if layout is none -%}
+fuck you bitch wheres my layout argument
 {%- else -%}
-{%- if type == "vertical" -%}
+{%- if layout == "vertical" -%}
 {% from 'macros/hms.html' import hms %}
 <div class="grid grid-cols-1 gap-8 vidgrid w-full m-0" style="width: 100%; max-width:30vw">
     {% for drop in drops %}
-    <div class="bg-white rounded-lg shadow-lg">
+    <div class="bg-white rounded-lg {{shadows}}">
         <iframe src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;enablejsapi=1"
             title="YouTube video player" frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -37,10 +42,12 @@ fuck you bitch wheres my type argument
     {% endfor %}
 </div>
 {%- else -%}
-{%- if type == "horizontal" -%}
+{%- if layout == "horizontal" -%}
 {% from 'macros/hms.html' import hms %}
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 vidgrid w-full">
+
 {% for drop in drops %}
-<div class="bg-white rounded-lg shadow-lg">
+<div class="bg-white rounded-lg {{shadows}}">
     <iframe src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;enablejsapi=1"
         title="YouTube video player" frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -67,6 +74,7 @@ fuck you bitch wheres my type argument
     </div>
 </div>
 {% endfor %}
+</div>
 {%- endif -%}
 {%- endif -%}
 {%- endif -%}

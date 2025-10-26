@@ -10,3 +10,10 @@ itemType:
 0: Not Prop
 1: Prop
 2: Sponsored
+
+itemCondition:
+0: Brand New
+1: Used
+2: Refurbished
+3: Second Hand Purchase
+4: Unknown

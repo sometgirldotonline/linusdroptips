@@ -1,23 +1,58 @@
-*{user-select: none;-webkit-user-drag: none;}
+* {
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
 .vidgrid {
     width: 100%;
 }
-.container{
+
+.container {
     max-width: unset !important;
 }
-iframe{
+
+iframe {
     aspect-ratio: 16 / 9;
 }
-@media (min-width: 610px){
-    .accmenu{float:right !important;}
+
+@media (min-width: 610px) {
+    .accmenu {
+        float: right !important;
+    }
 }
-@media (max-width:610px){
-    .accmenu, .navmenu{
+
+@media (max-width:610px) {
+
+    .accmenu,
+    .navmenu {
         width: 100%;
         text-align: right;
-        display:block;
+        display: block;
     }
-    .navmenu > * {
-        display:inline-block !important
+
+    .navmenu>* {
+        display: inline-block !important
     }
+}
+
+@media (max-width:640px) {
+    .dv .grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+}
+
+.dv .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.formvalue:has(:invalid) input, .formvalue:has(:invalid) input,  .formvalue select:has(option:checked:disabled) {
+    border: red solid 2px;
+
+}
+
+.formvalue:has(:invalid, select:has(option:checked:disabled)):after {
+    content: "Please fill out this field";
+    color: red;
+    font-style: italic;
+
 }

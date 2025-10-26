@@ -1,0 +1,11 @@
+{% macro hms(seconds) -%}
+{%- if seconds is none -%}
+-
+{%- else -%}
+{%- set s = seconds | int -%}
+{%- set h = s // 3600 -%}
+{%- set m = (s % 3600) // 60 -%}
+{%- set sec = s % 60 -%}
+{{ '%d:%02d:%02d' % (h, m, sec) }}
+{%- endif -%}
+{%- endmacro %}

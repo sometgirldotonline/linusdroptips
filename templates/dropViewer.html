@@ -1,0 +1,101 @@
+{% from 'macros/hms.html' import hms %}
+{% from 'macros/vidgrid.html' import vidgrid %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linus Drop Tips - {{ drop.itemName }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body class="bg-gray-100 font-sans leading-relaxed">
+    <div class="sticky top-0 z-50 shadow-md">
+        <!-- Header Section -->
+        <header class="bg-gray-900 text-white py-6">
+            <div class="container mx-auto px-6 flex items-center justify-between">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">Linus Drop Tips</h1>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="relative w-1/2">
+                    <input type="search" id="search" placeholder="Search dropped items..."
+                        class="w-full px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Bar -->
+        <nav class="bg-gray-800 text-white py-3 w-full">
+            <div class="container mx-auto px-6 w-full">
+                <ul class="inline-flex space-x-6 navmenu">
+                    <li><a href="/" class="hover:text-blue-500">Home</a></li>
+                    <!-- <li><a href="/dropboard" class="hover:text-blue-500">The Dropboard</a></li> -->
+                    <li><a href="/submit" class="hover:text-blue-500">Submit an Item</a></li>
+                </ul>
+                {% if loggedIn %}
+                <a href="/account" class="hover:text-blue-500 accmenu">Logged in as {{ session.github_login }}</a>
+                {% else %}
+                <a href="/login" class="hover:text-blue-500 accmenu">Welcome Guest! Log In.</a>
+                {% endif %}
+            </div>
+        </nav>
+    </div>
+    <!-- Main Content -->
+    <main class="py-6 w-full">
+        <div class="container px-6 w-full">
+            <h3 class="font-bold text-3xl mb-1"> {{ drop.itemName }}</h3>
+            <!-- Item Grid -->
+             <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-8 vidgrid w-full">
+            <div class="col-span-2 bg-white rounded-lg shadow-lg">
+                <iframe
+                    src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;enablejsapi=1"
+                    title="YouTube video player" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""
+                    class="w-ful object-cover rounded-lg " style="
+    width: 100%; max-width: 70vw
+"></iframe>
+
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
+                    <p class="text-gray-600 font-bold">Video: {{
+                            drop.videoTitle }} @ {{
+                        hms(drop.startSeconds) }}</p>
+                    <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
+                        datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                    <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
+                        datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                    {% if drop.itemPrice is not none %}
+                    <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
+                    {% else %}
+                    <p class="text-gray-600"> Item Cost: Not Listed</p>
+                    {% endif %}
+                    <p class="text-gray-600">Drop Reason: {{ drop.dropReason }} </p>
+                    <p class="text-gray-600">Dropped Onto: {{ drop.droppedOnto }} </p>
+                    <p class="text-gray-600">Resulting Damage: {{ drop.resultingDamage }} </p>
+                    <p class="text-gray-600">Approximate Drop Height: {{ drop.approxDropHeight }} </p>
+                    <p class="text-gray-600">Item Type: {{ {0: "Not a prop", 1: "Prop", 2: "Sponsored"}.get(drop.itemType, "Other")  }} </p>
+                    <p class="text-gray-600">Item Condition (before drop): {{ drop.itemCondition }} </p>
+                    <p class="text-gray-600">Component Type: {{ drop.componentType }} </p>
+                    <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{ drop.submitterID | getGithub("login") }}</a></p>
+                </div>
+            </div>
+            {{ vidgrid(drops, "vertical") }}
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center">
+            <p>&copy; Lily of sometgirl.online. Made using tailwind and python.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

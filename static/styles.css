@@ -1,0 +1,23 @@
+*{user-select: none;-webkit-user-drag: none;}
+.vidgrid {
+    width: 100%;
+}
+.container{
+    max-width: unset !important;
+}
+iframe{
+    aspect-ratio: 16 / 9;
+}
+@media (min-width: 610px){
+    .accmenu{float:right !important;}
+}
+@media (max-width:610px){
+    .accmenu, .navmenu{
+        width: 100%;
+        text-align: right;
+        display:block;
+    }
+    .navmenu > * {
+        display:inline-block !important
+    }
+}

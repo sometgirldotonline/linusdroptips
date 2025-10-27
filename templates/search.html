@@ -1,5 +1,7 @@
 {% from 'macros/hms.html' import hms %}
 {% from 'macros/vidgrid.html' import vidgrid %}
+{% from 'macros/dropdownBuilder.html' import dropdown %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,6 +19,58 @@
     <main class="py-6 w-full">
         <div class="container px-6 w-full">
             <h3 class="font-bold text-2xl mb-1"> Search results for {{ query }}</h3>
+            <nav class="bg-gray-800 text-white py-3 w-full filterbar">
+                <div class="container mx-auto px-6 w-full">
+                    <label for="sortby">
+                        <b>Sort By:</b><select name="sortby" id="sortby"
+                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                            {{ dropdown({"submit-recent":"Submit Date","price": "Cost","v-tit": "Video
+                            Title","drop-height":
+                            "Drop Height", "drop-tit":"Drop Title", "video-date": "Video Date"}, "submit-recent") }}
+                        </select>
+                    </label>
+                    <label for="order">
+                        <b>Order:</b><select name="order" id="order"
+                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                            {{ dropdown({"normal":"Normal Order (A-Z/1-9)","reverse": "Reverse order (Z-A/9-1)"},
+                            "normal")
+                            }}
+                        </select></label>
+                    <label for="itemType">
+                        <b>Item Type:</b><select name="itemType" id="itemType"
+                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                            {{ dropdown({"no-filter":"No Filter","no-spons":"Not Sponsored","prop": "Prop","sponsored":
+                            "Sponsored"}, "no-filter") }}
+                        </select></label>
+                    <label for="dropHeight">
+                        <b>Drop Height (in Linusses): <span
+                                title="You can use operators like <, <=, etc. Only one operator. For heights less than 0.8 Linusses, do <0.8, to do it inclusively do <=0.8">(?)</span></b><input
+                            name="dropHeight" type="text" placeholder="<0.69 Linus" id="dropHeight"
+                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                    </label>
+                    <label for="dropReason">
+                        <b>Drop Reason:</b><select name="dropReason" id="dropReason"
+                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                            {{ dropdown({"no-filter":"No Filter","no-spons":"Not Sponsored","prop": "Prop","sponsored":
+                            "Sponsored"}, "no-filter") }}
+                        </select></label>
+                    <label for="condition">
+                        <b>Item Condition (before drop):</b><select name="condition" id="condition"
+                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                            {{ dropdown({"-1":"No Filter","0":"Brand New","1":"Used","2": "Refurbished","3":
+                            "Second Hand", "4":"Other"}, "-1") }}
+                        </select>
+                    </label>
+                    <label for="comptype">
+                        <b>Component Type:</b><select name="compType" id="comptype"
+                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                            {{ dropdown({"no-filter":"No Filter","no-spons":"Not Sponsored","prop": "Prop","sponsored":
+                            "Sponsored"}, "no-filter") }}
+                        </select>
+                    </label>
+                </div>
+            </nav>
+            <br>
             <!-- Item Grid -->
             {{ vidgrid(drops, "horizontal", "rootgrid") }}
 

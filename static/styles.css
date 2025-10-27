@@ -60,3 +60,10 @@ iframe {
 .grid{
     align-items: start;
 }
+.filterbar{
+    margin-left:-1.5rem;
+    width:100vw;
+}
+label{
+    display:inline-block;
+}

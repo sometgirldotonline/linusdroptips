@@ -21,7 +21,7 @@
             <h3 class="font-bold text-3xl mb-1"> {{ drop.itemName }}</h3>
             <!-- Item Grid -->
             <div class="vidgrid w-full">
-                <div class="bg-white rounded-lg shadow-lg dv grid grid-cols-1 md:grid-cols-2 lg: grid-cols-2">
+                <div class="bg-white rounded-lg shadow-lg grid grid-cols-1 lg:grid-cols-2">
                     <iframe
                         src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;rel=0&amp;modestbranding=1"
                         title="YouTube video player" frameborder="0"
@@ -41,7 +41,7 @@
                             drop.videoTitle }} @ {{
                             hms(drop.startSeconds) }}</p>
                         <form action="/madawader/updatedrop" method="get"
-                            class="grid grid-cols-1 md:grid-cols-2 lg: grid-cols-2 gap-4">
+                            class="flex flex-col lg:grid lg:grid-cols-2 gap-4">
 
                             <input type="hidden" name="id" value="{{ drop.id }}">
                             <p class="text-gray-600">Item Name:

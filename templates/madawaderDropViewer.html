@@ -21,7 +21,7 @@
             <h3 class="font-bold text-3xl mb-1"> {{ drop.itemName }}</h3>
             <!-- Item Grid -->
             <div class="vidgrid w-full">
-                <div class="bg-white rounded-lg shadow-lg dv">
+                <div class="bg-white rounded-lg shadow-lg dv grid grid-cols-1 md:grid-cols-2 lg: grid-cols-2">
                     <iframe
                         src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;rel=0&amp;modestbranding=1"
                         title="YouTube video player" frameborder="0"
@@ -31,34 +31,39 @@
     width: 100%; max-width: 100vw
 "></iframe>
 
-                    <div class="p-4">
+                    <div class="p-4" style="    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+">
                         <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
-                        <form action="/madawader/updatedrop" method="get">
+                        <p class="text-gray-600 font-bold">Video: {{
+                            drop.videoTitle }} @ {{
+                            hms(drop.startSeconds) }}</p>
+                        <form action="/madawader/updatedrop" method="get"
+                            class="grid grid-cols-1 md:grid-cols-2 lg: grid-cols-2 gap-4">
 
                             <input type="hidden" name="id" value="{{ drop.id }}">
-                            <p class="text-gray-600 font-bold">Video: {{
-                                drop.videoTitle }} @ {{
-                                hms(drop.startSeconds) }}</p>
-                            <p class="text-gray-600">Item Name:</p>
+                            <p class="text-gray-600">Item Name:
                             <input value="{{drop.itemName }}" type="text" name="itemName"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600">Start Seconds: </p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
+                            <p class="text-gray-600">Start Seconds: 
                             <input value="{{drop.startSeconds }}" type="number" name="startSeconds"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600">Video Title: </p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
+                            <p class="text-gray-600">Video Title: 
                             <input value="{{drop.videoTitle }}" type="text" name="videoTitle"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600">YouTube ID: </p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
+                            <p class="text-gray-600">YouTube ID: 
                             <input value="{{drop.ytId }}" type="text" name="ytId"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
                             <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
                                 "Rejected"}.get(drop.verificationStatus,
-                                "Other") }} </p>
+                                "Other") }}
                             <select name="verificationStatus" id="verificationStatus"
                                 class="block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
                                 {{ dropdown({0: "Not verified", 1: "Verified", 2:"Rejected"}, drop.verificationStatus,
                                 False) }}
-                            </select>
+                            </select></p>
                             <p>
                                 <b>Rejection Message</b><br>
                                 <textarea name="rejectionNotice"
@@ -67,57 +72,57 @@
                             </textarea>
                             </p>
                             <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
-                                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} 
                             <input value="{{drop.videoDate }}" type="number" name="videoDate"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
                             <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
-                                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }}
                             <input value="{{drop.submitDate }}" type="number" name="submitDate"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"> </p>
+                            <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}
                             <input value="{{drop.itemPrice }}" type="text" name="itemPrice"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600">Drop Reason: {{ drop.dropReason }} </p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
+                            <p class="text-gray-600">Drop Reason: {{ drop.dropReason }} 
                             <input value="{{drop.dropReason }}" type="text" name="dropReason" list="dropReasonList"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600">Dropped Onto: {{ drop.droppedOnto }} </p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
+                            <p class="text-gray-600">Dropped Onto: {{ drop.droppedOnto }}
                             <input value="{{drop.droppedOnto }}" type="text" name="droppedOnto" list="droppedOntoList"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600">Resulting Damage: {{ drop.resultingDamage }} </p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"> </p>
+                            <p class="text-gray-600">Resulting Damage: {{ drop.resultingDamage }} 
                             <input value="{{drop.resultingDamage }}" type="text" name="resultingDamage"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                            <p class="text-gray-600">Approximate Drop Height: {{ drop.approxDropHeight }} </p>
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"></p>
+                            <p class="text-gray-600">Approximate Drop Height: {{ drop.approxDropHeight }}
                             <input value="{{drop.approxDropHeight }}" type="text" name="approxDropHeight"
-                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                                class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"> </p>
                             <p class="text-gray-600">Item Type: {{ {0: "Not a prop", 1: "Prop", 2:
-                                "Sponsored"}.get(drop.itemType, "Other") }} </p>
+                                "Sponsored"}.get(drop.itemType, "Other") }} 
                             <select name="itemType" id="itemType" required
                                 class="block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
                                 {{ dropdown({"a":"Make selection", 0: "Not a prop", 1: "Prop",
                                 2:"Sponsored"},drop.itemType,
                                 False) }}
-                            </select>
-                            <p class="text-gray-600">Item Condition (before drop): {{ drop.itemCondition }} </p>
+                            </select></p>
+                            <p class="text-gray-600">Item Condition (before drop): {{ drop.itemCondition }}
                             <input required="" value="{{ drop.itemCondition }}" list="itemConditionList"
                                 class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                                id="itemCondition" name="itemCondition" type="text" placeholder="Wooden Floor">
-                            <p class="text-gray-600">Component Type: {{ drop.componentType }} </p>
+                                id="itemCondition" name="itemCondition" type="text" placeholder="Wooden Floor"> </p>
+                            <p class="text-gray-600">Component Type: {{ drop.componentType }} 
                             <input required="" value="{{ drop.componentType }}" list="compTypeList"
                                 class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                                id="itemCondition" name="componentType" type="text" placeholder="Wooden Floor">
+                                id="itemCondition" name="componentType" type="text" placeholder="Wooden Floor"></p>
                             <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{
-                                    drop.submitterID | getGithub("login") }}</a></p>
+                                    drop.submitterID | getGithub("login") }}</a>
                             <input required="" value="{{ drop.submitterID }}"
                                 class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                                id="itemCondition" name="submitterID" type="text" placeholder="Wooden Floor">
+                                id="itemCondition" name="submitterID" type="text" placeholder="Wooden Floor"></p>
                             <p>
                                 <b>Description</b>
-                            </p>
                             <textarea
                                 class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
                                 id="note" placeholder=":3" name="note">{{ drop.note }}</textarea><br>
+                            </p>
                             <button type="submit"
-                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded col-span-2">
                                 Submit Drop
                             </button>
                         </form>

@@ -21,62 +21,151 @@
             <h3 class="font-bold text-2xl mb-1"> Search results for {{ query }}</h3>
             <nav class="bg-gray-800 text-white py-3 w-full filterbar">
                 <div class="container mx-auto px-6 w-full">
-                    <label for="sortby">
-                        <b>Sort By:</b><select name="sortby" id="sortby"
-                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
-                            {{ dropdown({"submit-recent":"Submit Date","price": "Cost","v-tit": "Video
-                            Title","drop-height":
-                            "Drop Height", "drop-tit":"Drop Title", "video-date": "Video Date"}, "submit-recent") }}
-                        </select>
-                    </label>
-                    <label for="order">
-                        <b>Order:</b><select name="order" id="order"
-                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
-                            {{ dropdown({"normal":"Normal Order (A-Z/1-9)","reverse": "Reverse order (Z-A/9-1)"},
-                            "normal")
-                            }}
-                        </select></label>
-                    <label for="itemType">
-                        <b>Item Type:</b><select name="itemType" id="itemType"
-                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
-                            {{ dropdown({"no-filter":"No Filter","no-spons":"Not Sponsored","prop": "Prop","sponsored":
-                            "Sponsored"}, "no-filter") }}
-                        </select></label>
-                    <label for="dropHeight">
-                        <b>Drop Height (in Linusses): <span
-                                title="You can use operators like <, <=, etc. Only one operator. For heights less than 0.8 Linusses, do <0.8, to do it inclusively do <=0.8">(?)</span></b><input
-                            name="dropHeight" type="text" placeholder="<0.69 Linus" id="dropHeight"
-                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
-                    </label>
-                    <label for="dropReason">
-                        <b>Drop Reason:</b><select name="dropReason" id="dropReason"
-                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
-                            {{ dropdown({"no-filter":"No Filter","no-spons":"Not Sponsored","prop": "Prop","sponsored":
-                            "Sponsored"}, "no-filter") }}
-                        </select></label>
-                    <label for="condition">
-                        <b>Item Condition (before drop):</b><select name="condition" id="condition"
-                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
-                            {{ dropdown({"-1":"No Filter","0":"Brand New","1":"Used","2": "Refurbished","3":
-                            "Second Hand", "4":"Other"}, "-1") }}
-                        </select>
-                    </label>
-                    <label for="comptype">
-                        <b>Component Type:</b><select name="compType" id="comptype"
-                            class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
-                            {{ dropdown({"no-filter":"No Filter","no-spons":"Not Sponsored","prop": "Prop","sponsored":
-                            "Sponsored"}, "no-filter") }}
-                        </select>
-                    </label>
+                    <form action="/search">
+                        <input type="hidden" name="q" value="{{ query }}">
+                        <label for="sortby">
+                            <b>Sort By:</b><select name="sortby" id="sortby"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                                {{ dropdown({"submit-recent":"Submit Date","price": "Cost","v-tit": "Video
+                                Title","drop-height":
+                                "Drop Height", "drop-tit":"Drop Title", "video-date": "Video Date"}, args.sortby) }}
+                            </select>
+                        </label>
+                        <label for="order">
+                            <b>Order:</b><select name="order" id="order"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                                {{ dropdown({"normal":"Normal Order (A-Z/1-9)","reverse": "Reverse order (Z-A/9-1)"},
+                                args.order)
+                                }}
+                            </select></label>
+                        <label for="itemType">
+                            <b>Item Type:</b><select name="itemType" id="itemType"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                                {{ dropdown({"no-filter":"No Filter","0":"Not Sponsored","1":
+                                "Prop","2":
+                                "Sponsored"}, args.itemType) }}
+                            </select></label>
+                        <label for="dropHeight">
+                            <b>Drop Height (in Linusses): <span
+                                    title="You can use operators like <, <=, etc. Only one operator. For heights less than 0.8 Linusses, do <0.8, to do it inclusively do <=0.8">(?)</span></b><input
+                                name="dropHeight" type="text" placeholder="<0.69 Linus" id="dropHeight" value="{{args.dropHeight}}"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                        </label>
+                        <label for="dropReason">
+                            <b>Drop Reason:</b><select name="dropReason" id="dropReason"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                                <option selected value="no-filter">No Filter</option>
+                                {% for item in formOpts %}
+                                {% if item.dropReason != None %}
+                                <option {% if args.dropReason==item.dropReason %} selected {%endif%}>{{item.dropReason}}
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                            </select></label>
+                        <label for="droppedOnto">
+                            <b>Dropped Onto:</b><select name="droppedOnto" id="droppedOnto"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                                <option selected value="no-filter">No Filter</option>
+                                {% for item in formOpts %}
+                                {% if item.droppedOnto != None %}
+                                <option {% if args.droppedOnto==item.droppedOnto %} selected {%endif%}>
+                                    {{item.droppedOnto}}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select></label>
+                        <label for="condition">
+                            <b>Item Condition (before drop):</b><select name="condition" id="condition"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                                {{ dropdown({"no-filter":"No Filter","Brand New":"Brand
+                                New","Used":"Used","Refurbished": "Refurbished","Second Hand":
+                                "Second Hand", "Other":"Other"}, args.condition) }}
+                            </select>
+                        </label>
+                        <label for="comptype">
+                            <b>Component Type:</b><select name="compType" id="comptype"
+                                class=" bg-gray-700 text-white-700 border border-gray-500 rounded py-3 px-4 mx-4 focus:outline-none focus:bg-gray-500 focus:border-gray-300">
+                                <option selected value="no-filter">No Filter</option>
+                                {% for item in formOpts %}
+                                {% if item.componentType != None %}
+                                <option {% if args.compType==item.componentType %} selected {%endif%}>
+                                    {{item.componentType}}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <input type="submit">
+                    </form>
                 </div>
             </nav>
             <br>
             <!-- Item Grid -->
-            {{ vidgrid(drops, "horizontal", "rootgrid") }}
+            <!-- {{ vidgrid(drops, "horizontal", "rootgrid") }} -->
+            {% from 'macros/hms.html' import hms %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 vidgrid w-full">
 
-        </div>
+                {% for drop in drops %}
+                {% if args.dropHeight | matheval(drop.approxDropHeight) %}
+                <div class="bg-white rounded-lg {{shadows}}">
+                    <iframe
+                        src="https://www.youtube.com/embed/{{ drop.ytId }}?start={{drop.startSeconds}}&amp;rel=0&amp;modestbranding=1"
+                        title="YouTube video player" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""
+                        class="w-ful object-cover rounded-lg " style="
+    width: 100%;
+"></iframe>
+                    {% if isModeration %}
+                    <div class="p-4" onclick="window.location.href='/madawader/drop/{{drop.id}}'">
+                        {% else %}
+                        <div class="p-4" onclick="window.location.href='/drop/{{drop.id}}'">
+                            {% endif %}
+                            <h2 class="text-lg font-semibold mb-0">{{ drop.itemName }}</h2>
+                            <p class="text-gray-600 font-bold">Video: {{ drop.videoTitle }} @ {{
+                                hms(drop.startSeconds) }}</p>
+                            <p class="text-gray-600">Video Published: {{drop.videoDate | timestamp_to_time |
+                                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                            <p class="text-gray-600">Drop Submitted: {{drop.submitDate | timestamp_to_time |
+                                datetimeformat('%Y-%m-%dT%H:%M:%S%z') }} </p>
+                            {% if drop.itemPrice is not none %}
+                            <p class="text-gray-600"> Item Cost: ${{ drop.itemPrice }}</p>
+                            {% else %}
+                            <p class="text-gray-600"> Item Cost: Not Listed</p>
+                            {% endif %}
+                            {% if userIsAuthor %}
+                            <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                                "Rejected"}.get(drop.verificationStatus,
+                                "Other") }} </p>
+                            {% if drop.verificationStatus == 2 %}
+                            <p>
+                                <b>Your drop was rejected. Here's what a moderator had to say:</b><br>
+                                <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                            </p>
+                            {% endif %}
+                            {% endif %}
+                            {% if isModeration %}
+                            <p class="text-gray-600">Verification: {{ {0: "Not verified", 1: "Verified", 2:
+                                "Rejected"}.get(drop.verificationStatus,
+                                "Other") }} </p>
+                            <p>
+                                <b>Rejection note:</b><br>
+                                <code>
+                {{ drop.rejectionNotice }}
+            </code>
+                            </p>
+                            {% endif %}
+                            <p class="text-gray-600">Submitted by: <a href="/user/{{ drop.submitterID }}">{{
+                                    drop.submitterID |
+                                    getGithub("login") }}</a></p>
+                        </div>
+                    </div>
+                    {%endif%}
+                    {% endfor %}
+                </div>
+
+            </div>
     </main>
-
     <!-- Footer Section -->
     <footer class="bg-gray-800 text-white py-6">
         <div class="container mx-auto text-center">

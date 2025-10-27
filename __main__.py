@@ -32,6 +32,7 @@ import psutil
 from dotenv import load_dotenv
 from flask_dance.contrib.github import make_github_blueprint, github
 import requests
+import numexpr as ne
 from requests.auth import HTTPBasicAuth
 startupTimeStamp = time.time()
 load_dotenv()
@@ -91,14 +92,13 @@ def requests_per_second():
 db = None
 
 def get_db():
-    global db
-    if db == None:
-        db = sqlite3.connect(os.path.join(
+    if 'db' not in g:
+        g.db = sqlite3.connect(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             f"appdata.sqlite",
         ))
-        db.row_factory = sqlite3.Row
-    return db
+        g.db.row_factory = sqlite3.Row
+    return g.db
 
 
 @app.teardown_appcontext
@@ -125,6 +125,18 @@ def timestamp_to_time(value):
         return None
     # `datetime` is imported as the class (from datetime import datetime)
     return datetime.fromtimestamp(t)
+
+@app.template_filter()
+def matheval(expr, value):
+    print(expr, value)
+    expr = str(expr).strip()
+    if not expr or value in (None, ""):
+        return True  # or True, depending on what “missing” should mean
+    try:
+        print(f"{value} {expr}")
+        return bool(ne.evaluate(f"{value} {expr}"))
+    except Exception:
+        return False
 
 @app.template_filter()
 def datetimeformat(v, fmt='%Y-%m-%dT%H:%M:%S%z'):
@@ -243,18 +255,49 @@ LIMIT 10;
 def search():
     if "q" not in request.args:
         return redirect("/")
+    fixedFilters = ""
+    params = []
     query = request.args["q"]
-    db = get_db()
-    cur = db.cursor()
-    prepareSession()
     terms = query.split(" ")
     columns = "itemName,itemPrice,dropReason,droppedOnto,resultingDamage,approxDropHeight,itemType,itemCondition,componentType,submitterID,ytId,videoTitle,videoDate,startSeconds,submitDate".split(",")
     query_parts = []
-    params = []
     for term in terms:
         for col in columns:
             query_parts.append(f"{col} LIKE ?")
             params.append(f"%{term}%" )
+    if "itemType" in request.args and request.args.get("itemType") != "no-filter":
+        fixedFilters = f"{fixedFilters} AND itemType = ?"
+        params.append(request.args.get("itemType"))
+    if "compType" in request.args and request.args.get("compType") != "no-filter":
+        fixedFilters = f"{fixedFilters} AND componentType = ?"
+        params.append(request.args.get("compType"))
+    if "dropReason" in request.args and request.args.get("dropReason") != "no-filter":
+        params.append(request.args.get("dropReason"))
+        fixedFilters = f"{fixedFilters} AND dropReason = ?"
+    if "droppedOnto" in request.args and request.args.get("droppedOnto") != "no-filter":
+        params.append(request.args.get("droppedOnto"))
+        fixedFilters = f"{fixedFilters} AND droppedOnto = ?"
+    if "condition" in request.args and request.args.get("condition") != "no-filter":
+        params.append(request.args.get("condition"))
+        fixedFilters = f"{fixedFilters} AND itemCondition = ?"
+    # we are silly goobers and have to be last because SQL
+    sortObject = {"submit-recent":"submitDate", "price":"itemPrice", "v-tit":"videoTitle", "drop-height": "approxDropHeight", "drop-tit":"itemName", "video-date":"videoDate"}
+    if "sortby" in request.args:
+        fixedFilters = f"{fixedFilters} ORDER BY ? {"DESC" if request.args.get("order") == "reverse" else ""}"    
+        params.append(sortObject[request.args.get("sortby")] ,)
+    if "order" in request.args and request.args.get("order") != "normal" and "sortby" not in request.args:
+        fixedFilters = f"{fixedFilters} ORDER BY rowid DESC"
+    print(fixedFilters)
+
+    db = get_db()
+    cur = db.cursor()
+    prepareSession()
+
+    print(f"""SELECT *
+    FROM drops
+    WHERE verificationStatus = 1 AND ({' OR '.join(query_parts)}) {fixedFilters}
+    """)
+    print(params)
     return render_template(
         "search.html",
         showAnayliticsNotice=not session["analNoticeSeen"],
@@ -263,10 +306,46 @@ def search():
         session=session,
         loggedIn=github.authorized,
         query=query,
+        args=request.args,
         drops=cur.execute(f"""SELECT *
 FROM drops
-WHERE verificationStatus = 1 AND ({' OR '.join(query_parts)})
-""", params).fetchall()
+WHERE verificationStatus = 1 AND ({' OR '.join(query_parts)}) {fixedFilters}
+""", params).fetchall(),
+        formOpts=cur.execute("""WITH droppedOnto_cte AS (
+    SELECT "droppedOnto" AS value, ROW_NUMBER() OVER () AS rn
+    FROM drops
+    WHERE "droppedOnto" IS NOT NULL
+    GROUP BY "droppedOnto"
+),
+dropReason_cte AS (
+    SELECT "dropReason" AS value, ROW_NUMBER() OVER () AS rn
+    FROM drops
+    WHERE "dropReason" IS NOT NULL
+    GROUP BY "dropReason"
+),
+componentType_cte AS (
+    SELECT "componentType" AS value, ROW_NUMBER() OVER () AS rn
+    FROM drops
+    WHERE "componentType" IS NOT NULL
+    GROUP BY "componentType"
+),
+all_rns AS (
+    SELECT rn FROM droppedOnto_cte
+    UNION
+    SELECT rn FROM dropReason_cte
+    UNION
+    SELECT rn FROM componentType_cte
+)
+SELECT 
+    d.value AS droppedOnto,
+    r.value AS dropReason,
+    c.value AS componentType
+FROM all_rns a
+LEFT JOIN droppedOnto_cte d ON d.rn = a.rn
+LEFT JOIN dropReason_cte r ON r.rn = a.rn
+LEFT JOIN componentType_cte c ON c.rn = a.rn
+ORDER BY a.rn;
+""").fetchall()
     )
 
 
